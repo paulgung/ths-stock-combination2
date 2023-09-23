@@ -22,7 +22,7 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const [deleteModalOpen, handleDeleteModalOpen] = useState<boolean>(false);
-  const [currentRow, setCurrentRow] = useState({}); //设置要编辑的组合
+  const [currentRow, setCurrentRow] = useState<any>({}); //设置要编辑的组合
   const [deleteRecord, setDeleteRecord] = useState<any>({}); // 设置要删除的组合
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
@@ -154,7 +154,7 @@ const Index: React.FC = () => {
             combinationId: parseInt(value.combinationId),
           };
           const success = (await isEditing)
-            ? updateSubStockCombination(_value)
+            ? updateSubStockCombination({ _value, id: currentRow.id })
             : addSubStockCombination(_value);
           if (success) {
             handleModalOpen(false);

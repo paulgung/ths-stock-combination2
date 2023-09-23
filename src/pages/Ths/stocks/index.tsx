@@ -29,7 +29,7 @@ const Index: React.FC = () => {
   const formRef = useRef(null); //表单引用
   const [stockList, setStockList] = useState([]);
   const [deleteModalOpen, handleDeleteModalOpen] = useState<boolean>(false);
-  const [currentRow, setCurrentRow] = useState({});
+  const [currentRow, setCurrentRow] = useState<any>({});
   const [deleteRecord, setDeleteRecord] = useState<any>({}); // 设置要删除的组合
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
@@ -175,7 +175,9 @@ const Index: React.FC = () => {
             ...value,
             combinationId: parseInt(value.combinationId),
           };
-          const success = (await isEditing) ? updateStocks(_value) : addStocks(_value);
+          const success = (await isEditing)
+            ? updateStocks({ _value, id: currentRow.id })
+            : addStocks(_value);
           if (success) {
             handleModalOpen(false);
             if (actionRef.current) {
