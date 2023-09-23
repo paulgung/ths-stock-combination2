@@ -53,46 +53,6 @@ const Welcome: React.FC = () => {
     window.open(`/kline/${stockCode}&${marketCode}`, '_blank');
   };
 
-  // 查询股票行情
-  const getQuotation = async (res: any) => {
-    const stock_id_list = res.data?.data.map((item: any) => {
-      return {
-        market_id: item.marketId,
-        stock_code: item.stockCode,
-      };
-    });
-    const sort_mode = 1; //排序模式（0-股票价格，1-涨跌幅）
-    const sort_rule = -1; //排序规则（1-升序，-1-降序）
-    const page_num = 1;
-    const page_size = 10;
-    const quotations: any = await getStockQuotation({
-      stock_id_list,
-      sort_mode,
-      sort_rule,
-      page_num,
-      page_size,
-    });
-    const _data = res.data?.data.map((item: any) => {
-      const subList = quotations.data.data.list.filter((item2: any) => {
-        return item.stockCode === item2.stock_code;
-      });
-      return {
-        ...item,
-        stockName: subList[0].stock_name,
-        stockCode: subList[0].stock_code,
-        stockPrice: subList[0].newest_price,
-        stockGains: `${Number(subList[0].newest_uplift) > 0 ? '+' : ''}${Number(
-          subList[0].newest_uplift,
-        ).toFixed(2)}%`,
-      };
-    });
-    return {
-      data: _data,
-      success: res.data?.success,
-      total: res.data?.total,
-    };
-  };
-
   useEffect(() => {
     // 全量获取组合数据
     getAllCombinationData({}).then(
@@ -212,6 +172,7 @@ const Welcome: React.FC = () => {
           <ProList<{ title: string }>
             rowKey="title"
             headerTitle=""
+            style={{ marginTop: '10px' }}
             expandable={{ expandedRowKeys, onExpandedRowsChange: setExpandedRowKeys }}
             dataSource={newDataSource}
             metas={{
@@ -245,7 +206,7 @@ const Welcome: React.FC = () => {
         {/* 右侧股票信息 */}
         <div style={{ width: '50%', background: '#fff' }}>
           <ProTable
-            headerTitle="组合信息"
+            headerTitle="股票信息"
             columns={columns}
             actionRef={actionRef}
             cardBordered
