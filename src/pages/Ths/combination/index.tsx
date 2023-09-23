@@ -1,4 +1,9 @@
-import { addStockCombination, getCombinationData } from '@/services/ths';
+import {
+  addStockCombination,
+  deleteStockCombination,
+  getCombinationData,
+  updateStockCombination,
+} from '@/services/ths';
 import { ModalForm, ProFormText } from '@ant-design/pro-components';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
@@ -16,6 +21,10 @@ const Index: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const navigate = useNavigate();
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
+  const [deleteModalOpen, handleDeleteModalOpen] = useState<boolean>(false);
+  const [currentEditRow, setCurrentEditRow] = useState<any>({});
+  const [deleteRecord, setDeleteRecord] = useState<any>({}); // 设置要删除的组合
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   // 携带父组合id跳转子组合
   const jumpSubCombination = (id: number): void => {
@@ -42,6 +51,32 @@ const Index: React.FC = () => {
           </div>
         );
       },
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      key: 'option',
+      render: (text, record) => [
+        <a
+          key="editable"
+          onClick={() => {
+            setCurrentEditRow(record);
+            handleModalOpen(true);
+            setIsEditing(true);
+          }}
+        >
+          编辑
+        </a>,
+        <a
+          key="editState"
+          onClick={() => {
+            handleDeleteModalOpen(true);
+            setDeleteRecord(record);
+          }}
+        >
+          删除
+        </a>,
+      ],
     },
   ];
 
@@ -87,6 +122,7 @@ const Index: React.FC = () => {
             key="primary"
             onClick={() => {
               handleModalOpen(true);
+              setIsEditing(false);
             }}
           >
             新增
@@ -110,13 +146,16 @@ const Index: React.FC = () => {
       {/* 弹框 */}
       <ModalForm
         labelCol={{ span: 4 }}
-        title="新增组合"
+        title={isEditing ? '编辑组合' : '新增组合'}
+        initialValues={currentEditRow}
         layout={'horizontal'}
         width="500px"
         open={createModalOpen}
         onOpenChange={handleModalOpen}
         onFinish={async (value) => {
-          const success = await addStockCombination(value);
+          const success = (await isEditing)
+            ? updateStockCombination({ ...value, id: currentEditRow.id })
+            : addStockCombination(value);
           if (success) {
             handleModalOpen(false);
             if (actionRef.current) {
@@ -135,6 +174,27 @@ const Index: React.FC = () => {
           width="md"
           name="combinationName"
         />
+      </ModalForm>
+
+      {/* 删除弹框 */}
+      <ModalForm
+        labelCol={{ span: 4 }}
+        title="删除组合"
+        layout={'horizontal'}
+        width="500px"
+        open={deleteModalOpen}
+        onOpenChange={handleDeleteModalOpen}
+        onFinish={async () => {
+          const success = await deleteStockCombination({ id: deleteRecord.id });
+          if (success) {
+            handleDeleteModalOpen(false);
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
+          }
+        }}
+      >
+        <div>你确定要删除该组合吗？</div>
       </ModalForm>
     </PageContainer>
   );

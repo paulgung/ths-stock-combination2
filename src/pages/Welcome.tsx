@@ -81,7 +81,9 @@ const Welcome: React.FC = () => {
         stockName: subList[0].stock_name,
         stockCode: subList[0].stock_code,
         stockPrice: subList[0].newest_price,
-        stockGains: `+${Number(subList[0].newest_uplift).toFixed(2)}%`,
+        stockGains: `${Number(subList[0].newest_uplift) > 0 ? '+' : ''}${Number(
+          subList[0].newest_uplift,
+        ).toFixed(2)}%`,
       };
     });
     return {
@@ -281,7 +283,9 @@ const Welcome: React.FC = () => {
                       stockName: subList[0].stock_name,
                       stockCode: subList[0].stock_code,
                       stockPrice: subList[0].newest_price,
-                      stockGains: `+${Number(subList[0].newest_uplift).toFixed(2)}%`,
+                      stockGains: `${Number(subList[0].newest_uplift) > 0 ? '+' : ''}${Number(
+                        subList[0].newest_uplift,
+                      ).toFixed(2)}%`,
                     };
                   });
                   return {

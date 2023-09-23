@@ -1,4 +1,4 @@
-import { addStocks, getStockData, getStockList } from '@/services/ths';
+import { addStocks, deleteStocks, getStockData, getStockList, updateStocks } from '@/services/ths';
 import { ModalForm, ProFormSelect, ProFormText } from '@ant-design/pro-components';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
@@ -28,6 +28,10 @@ const Index: React.FC = () => {
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const formRef = useRef(null); //表单引用
   const [stockList, setStockList] = useState([]);
+  const [deleteModalOpen, handleDeleteModalOpen] = useState<boolean>(false);
+  const [currentRow, setCurrentRow] = useState({});
+  const [deleteRecord, setDeleteRecord] = useState<any>({}); // 设置要删除的组合
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const columns: ProColumns<IInterface>[] = [
     {
@@ -35,11 +39,6 @@ const Index: React.FC = () => {
       hideInSearch: false,
       dataIndex: 'combinationId',
     },
-    // {
-    //   title: '子组合ID',
-    //   hideInSearch: false,
-    //   dataIndex: 'subCombinationId',
-    // },
     {
       title: '股票ID',
       hideInSearch: true,
@@ -77,6 +76,32 @@ const Index: React.FC = () => {
         return <div style={getStockColor(item)}>{item}</div>;
       },
     },
+    {
+      title: '操作',
+      valueType: 'option',
+      key: 'option',
+      render: (text, record) => [
+        <a
+          key="editable"
+          onClick={() => {
+            setCurrentRow(record);
+            handleModalOpen(true);
+            setIsEditing(true);
+          }}
+        >
+          编辑
+        </a>,
+        <a
+          key="editState"
+          onClick={() => {
+            handleDeleteModalOpen(true);
+            setDeleteRecord(record);
+          }}
+        >
+          删除
+        </a>,
+      ],
+    },
   ];
 
   return (
@@ -90,7 +115,7 @@ const Index: React.FC = () => {
           return getStockData({
             pageSize: rows,
             pageNo: current,
-            combinationId,
+            combinationId: combinationId ? combinationId : subCombinationId,
           }).then(
             (res: any) => {
               return {
@@ -139,7 +164,8 @@ const Index: React.FC = () => {
       <ModalForm
         labelCol={{ span: 5 }}
         formRef={formRef}
-        title="新增股票信息"
+        title={isEditing ? '编辑股票信息' : '新增股票信息'}
+        initialValues={currentRow}
         layout={'horizontal'}
         width="500px"
         open={createModalOpen}
@@ -149,7 +175,7 @@ const Index: React.FC = () => {
             ...value,
             combinationId: parseInt(value.combinationId),
           };
-          const success = await addStocks(_value);
+          const success = (await isEditing) ? updateStocks(_value) : addStocks(_value);
           if (success) {
             handleModalOpen(false);
             if (actionRef.current) {
@@ -167,6 +193,7 @@ const Index: React.FC = () => {
           label="组合ID"
           width="md"
           name="combinationId"
+          disabled={isEditing}
         />
         <ProFormText
           rules={[
@@ -202,6 +229,27 @@ const Index: React.FC = () => {
           }}
           rules={[{ required: true }]}
         />
+      </ModalForm>
+
+      {/* 删除弹框 */}
+      <ModalForm
+        labelCol={{ span: 4 }}
+        title="删除组合"
+        layout={'horizontal'}
+        width="500px"
+        open={deleteModalOpen}
+        onOpenChange={handleDeleteModalOpen}
+        onFinish={async () => {
+          const success = await deleteStocks({ id: deleteRecord.id });
+          if (success) {
+            handleDeleteModalOpen(false);
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
+          }
+        }}
+      >
+        <div>你确定要删除该股票吗？</div>
       </ModalForm>
     </PageContainer>
   );
