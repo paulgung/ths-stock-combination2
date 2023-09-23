@@ -1,4 +1,9 @@
-import { getAllCombinationData, getAllStockData, getAllSubcombinationData } from '@/services/ths';
+import {
+  getAllCombinationData,
+  getAllStockData,
+  getAllSubcombinationData,
+  getStockQuotation,
+} from '@/services/ths';
 import { PageContainer, ProList } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { ProTable } from '@ant-design/pro-table';
@@ -17,7 +22,6 @@ const Welcome: React.FC = () => {
   const [combinationDataSource, setCombinationDataSource] = useState<any[]>([]);
   const [subCombinationDataSource, setSubCombinationDataSource] = useState<any[]>([]);
   const [newDataSource, setNewDataSource] = useState<any[]>([]);
-  const [subCombinationId, setSubCombinationId] = useState(0); //选中的子组合ID
   const [combinationId, setCombinationId] = useState(0); //选中的组合ID
 
   const navigate = useNavigate();
@@ -35,9 +39,7 @@ const Welcome: React.FC = () => {
 
   // 点击子组合更新股票列表
   const updateStockListFromSub = (subCombinationId: number) => {
-    console.log('subCombinationId', subCombinationId);
-    setSubCombinationId(subCombinationId);
-    setCombinationId(0);
+    setCombinationId(subCombinationId);
     actionRef.current?.reload();
   };
 
@@ -45,7 +47,6 @@ const Welcome: React.FC = () => {
   const updateStockList = (combinationId: number) => {
     console.log('combinationId', combinationId);
     setCombinationId(combinationId);
-    setSubCombinationId(0);
     actionRef.current?.reload();
   };
 
@@ -176,7 +177,6 @@ const Welcome: React.FC = () => {
               },
               description: {
                 render: (_, row: any) => {
-                  console.log('弓少旭想看看render的row', row);
                   return (
                     <div>
                       {row.subList.map((item: any) => {
@@ -209,13 +209,36 @@ const Welcome: React.FC = () => {
               return getAllStockData({
                 pageSize: rows,
                 pageNo: current,
-                subCombinationId: subCombinationId ? subCombinationId : null,
                 combinationId: combinationId ? combinationId : null,
               }).then(
-                (res: any) => {
-                  console.log('弓少旭想分辨res', res);
+                async (res: any) => {
+                  const stock_id_list = res.data?.data.map((item: any) => {
+                    console.log('弓少旭 必须看看item', item);
+                    return {
+                      market_id: item.marketId,
+                      stock_code: item.stockCode,
+                    };
+                  });
+                  const sort_mode = 1; //排序模式（0-股票价格，1-涨跌幅）
+                  const sort_rule = -1; //排序规则（1-升序，-1-降序）
+                  const page_num = 1;
+                  const page_size = 10;
+                  console.log('弓少旭必须看看res.data?.data', res.data?.data);
+                  const quotations: any = await getStockQuotation({
+                    stock_id_list,
+                    sort_mode,
+                    sort_rule,
+                    page_num,
+                    page_size,
+                  });
+                  const _data = res.data?.data.map((item: any) => {
+                    const subList = quotations.filter((item2: any) => {
+                      return item.id === item2.combinationId;
+                    });
+                    return { ...item, subList };
+                  });
                   return {
-                    data: res.data?.data,
+                    data: _data,
                     success: res.data?.success,
                     total: res.data?.total,
                   };
