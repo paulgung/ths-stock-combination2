@@ -1,6 +1,5 @@
 import { Footer } from '@/components';
 import loginBackground from '@/images/loginBackground.png';
-import { login } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import { LockOutlined, MobileOutlined, UserOutlined } from '@ant-design/icons';
 import {
@@ -60,17 +59,11 @@ const Login: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       // 登录
-      const msg = await login({ ...values, type });
-      if (msg.status === 'ok') {
-        message.success('登录成功！');
-        await fetchUserInfo();
-        const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
-        return;
-      }
-      console.log(msg);
-      // 如果失败去设置用户错误信息
-      setUserLoginState(msg);
+      message.success('登录成功！');
+      await fetchUserInfo();
+      const urlParams = new URL(window.location.href).searchParams;
+      history.push(urlParams.get('redirect') || '/');
+      return;
     } catch (error) {
       console.log(error);
       message.error('登录失败，请重试！');
@@ -79,7 +72,7 @@ const Login: React.FC = () => {
   const { status, type: loginType } = userLoginState;
 
   return (
-    <div style={{height:'100%',backgroundImage:`url(${loginBackground})`}}>
+    <div style={{ height: '100%', backgroundImage: `url(${loginBackground})` }}>
       <div
         style={{
           flex: '1',
@@ -102,7 +95,7 @@ const Login: React.FC = () => {
           <Tabs
             activeKey={type}
             onChange={setType}
-            style={{marginTop:'16px'}}
+            style={{ marginTop: '16px' }}
             centered
             items={[
               {

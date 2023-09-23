@@ -23,7 +23,6 @@ const Welcome: React.FC = () => {
   const [subCombinationDataSource, setSubCombinationDataSource] = useState<any[]>([]);
   const [newDataSource, setNewDataSource] = useState<any[]>([]);
   const [combinationId, setCombinationId] = useState(0); //选中的组合ID
-
   const navigate = useNavigate();
 
   // 辅助方法
@@ -45,14 +44,51 @@ const Welcome: React.FC = () => {
 
   // 点击组合更新股票列表(全量)
   const updateStockList = (combinationId: number) => {
-    console.log('combinationId', combinationId);
     setCombinationId(combinationId);
     actionRef.current?.reload();
   };
 
   // 点击股票跳转分时k线图
   const jumpKline = (stockCode: number, marketCode: number) => {
-    navigate(`/kline/${stockCode}&${marketCode}`);
+    window.open(`/kline/${stockCode}&${marketCode}`, '_blank');
+  };
+
+  // 查询股票行情
+  const getQuotation = async (res: any) => {
+    const stock_id_list = res.data?.data.map((item: any) => {
+      return {
+        market_id: item.marketId,
+        stock_code: item.stockCode,
+      };
+    });
+    const sort_mode = 1; //排序模式（0-股票价格，1-涨跌幅）
+    const sort_rule = -1; //排序规则（1-升序，-1-降序）
+    const page_num = 1;
+    const page_size = 10;
+    const quotations: any = await getStockQuotation({
+      stock_id_list,
+      sort_mode,
+      sort_rule,
+      page_num,
+      page_size,
+    });
+    const _data = res.data?.data.map((item: any) => {
+      const subList = quotations.data.data.list.filter((item2: any) => {
+        return item.stockCode === item2.stock_code;
+      });
+      return {
+        ...item,
+        stockName: subList[0].stock_name,
+        stockCode: subList[0].stock_code,
+        stockPrice: subList[0].newest_price,
+        stockGains: `+${Number(subList[0].newest_uplift).toFixed(2)}%`,
+      };
+    });
+    return {
+      data: _data,
+      success: res.data?.success,
+      total: res.data?.total,
+    };
   };
 
   useEffect(() => {
@@ -123,7 +159,7 @@ const Welcome: React.FC = () => {
       render: (item, record: any) => {
         return (
           <a
-            onClick={() => jumpKline(record?.stockCode, record?.marketCode)}
+            onClick={() => jumpKline(record?.stockCode, record?.marketId)}
             target="_blank"
             rel="noreferrer"
           >
@@ -137,6 +173,13 @@ const Welcome: React.FC = () => {
       ellipsis: true,
       dataIndex: 'stockCode',
       hideInSearch: true,
+    },
+    {
+      title: '市场编号',
+      ellipsis: true,
+      dataIndex: 'marketId',
+      hideInSearch: true,
+      hideInTable: true,
     },
     {
       title: '股票价格',
@@ -213,7 +256,6 @@ const Welcome: React.FC = () => {
               }).then(
                 async (res: any) => {
                   const stock_id_list = res.data?.data.map((item: any) => {
-                    console.log('弓少旭 必须看看item', item);
                     return {
                       market_id: item.marketId,
                       stock_code: item.stockCode,
@@ -223,7 +265,6 @@ const Welcome: React.FC = () => {
                   const sort_rule = -1; //排序规则（1-升序，-1-降序）
                   const page_num = 1;
                   const page_size = 10;
-                  console.log('弓少旭必须看看res.data?.data', res.data?.data);
                   const quotations: any = await getStockQuotation({
                     stock_id_list,
                     sort_mode,
@@ -232,10 +273,16 @@ const Welcome: React.FC = () => {
                     page_size,
                   });
                   const _data = res.data?.data.map((item: any) => {
-                    const subList = quotations.filter((item2: any) => {
-                      return item.id === item2.combinationId;
+                    const subList = quotations.data.data.list.filter((item2: any) => {
+                      return item.stockCode === item2.stock_code;
                     });
-                    return { ...item, subList };
+                    return {
+                      ...item,
+                      stockName: subList[0].stock_name,
+                      stockCode: subList[0].stock_code,
+                      stockPrice: subList[0].newest_price,
+                      stockGains: `+${Number(subList[0].newest_uplift).toFixed(2)}%`,
+                    };
                   });
                   return {
                     data: _data,

@@ -56,7 +56,6 @@ const Index: React.FC = () => {
         actionRef={actionRef}
         cardBordered
         request={async ({ rows = 10, current, combinationId: _combinationId }) => {
-          console.log('_combinationId', _combinationId);
           return getSubcombinationData({
             pageSize: rows,
             pageNo: current,

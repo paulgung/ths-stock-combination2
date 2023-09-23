@@ -1,5 +1,5 @@
-import { addStocks, getStockData } from '@/services/ths';
-import { ModalForm, ProFormText } from '@ant-design/pro-components';
+import { addStocks, getStockData, getStockList } from '@/services/ths';
+import { ModalForm, ProFormSelect, ProFormText } from '@ant-design/pro-components';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { ProTable } from '@ant-design/pro-table';
@@ -26,6 +26,8 @@ const Index: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const { subId: subCombinationId } = useParams(); // 获取父组合id
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
+  const formRef = useRef(null); //表单引用
+  const [stockList, setStockList] = useState([]);
 
   const columns: ProColumns<IInterface>[] = [
     {
@@ -49,7 +51,6 @@ const Index: React.FC = () => {
       dataIndex: 'stockName',
       hideInSearch: true,
       render: (item, record: any) => {
-        console.log('record', record);
         return (
           <a href={record?.stockUrl} target="_blank" rel="noreferrer">
             {item}
@@ -85,11 +86,11 @@ const Index: React.FC = () => {
         columns={columns}
         actionRef={actionRef}
         cardBordered
-        request={async ({ rows = 10, current, subCombinationId: _subCombinationId }) => {
+        request={async ({ rows = 10, current, combinationId }) => {
           return getStockData({
             pageSize: rows,
             pageNo: current,
-            subCombinationId: _subCombinationId ? _subCombinationId : subCombinationId,
+            combinationId,
           }).then(
             (res: any) => {
               return {
@@ -137,6 +138,7 @@ const Index: React.FC = () => {
       {/* 弹框 */}
       <ModalForm
         labelCol={{ span: 5 }}
+        formRef={formRef}
         title="新增股票信息"
         layout={'horizontal'}
         width="500px"
@@ -146,7 +148,6 @@ const Index: React.FC = () => {
           const _value = {
             ...value,
             combinationId: parseInt(value.combinationId),
-            subCombinationId: parseInt(value.subCombinationId),
           };
           const success = await addStocks(_value);
           if (success) {
@@ -173,59 +174,33 @@ const Index: React.FC = () => {
               required: true,
             },
           ]}
-          label="子组合ID"
+          label="市场ID"
           width="md"
-          name="subCombinationId"
+          name="marketId"
         />
-        <ProFormText
-          rules={[
-            {
-              required: true,
-            },
-          ]}
-          label="股票名称"
-          width="md"
-          name="stockName"
-        />
-        <ProFormText
-          rules={[
-            {
-              required: true,
-            },
-          ]}
-          label="股票编号"
-          width="md"
+        <ProFormSelect
           name="stockCode"
-        />
-        <ProFormText
-          rules={[
-            {
-              required: true,
-            },
-          ]}
-          label="股票价格"
+          label="股票代码"
           width="md"
-          name="stockPrice"
-        />
-        <ProFormText
-          rules={[
-            {
-              required: true,
-            },
-          ]}
-          label="涨跌幅"
-          width="md"
-          name="stockGains"
-        />
-        <ProFormText
-          rules={[
-            {
-              required: false,
-            },
-          ]}
-          label="个股页面"
-          width="md"
-          name="stockUrl"
+          showSearch
+          debounceTime={300}
+          request={async ({ keyWords }) => {
+            const res = await getStockList({ keywords: keyWords, page_num: 1, page_size: 5 });
+            const list = res.data.data.list.map((item: any) => {
+              return { value: item.stock_code, label: item.stock_code };
+            });
+            setStockList(res.data.data.list);
+            return list;
+          }}
+          onChange={(value) => {
+            const res: any = stockList.find((item: any) => {
+              console.log(item);
+              // 找到股票代码对应的那条记录，然后取market_id启到联动效果。
+              return item.stock_code === value;
+            });
+            formRef?.current.setFieldsValue({ marketId: res.market_id }); // 更新 ProFormText 的值
+          }}
+          rules={[{ required: true }]}
         />
       </ModalForm>
     </PageContainer>

@@ -131,3 +131,11 @@ export async function getStockQuotation(params?: { [key: string]: any }) {
     data: params,
   });
 }
+
+// 分页查询股票列表（支持模糊查询）
+export async function getStockList(params?: { [key: string]: any }) {
+  return axios(baseUrl + '/stock/v1/query_stock_list', {
+    method: 'GET',
+    params: params,
+  });
+}

@@ -20,7 +20,6 @@ const Index: React.FC = () => {
   // 携带父组合id跳转子组合
   const jumpSubCombination = (id: number): void => {
     navigate(`/ths/subcombination/${id}`);
-    console.log('first');
   };
   const columns: ProColumns<IInterface>[] = [
     {
@@ -56,7 +55,6 @@ const Index: React.FC = () => {
         search={false}
         request={async (search) => {
           const { rows = 10, current, id, combinationName } = search;
-          console.log(rows, current);
 
           return getCombinationData({
             pageSize: rows,
@@ -66,7 +64,6 @@ const Index: React.FC = () => {
           }).then(
             // 返回数据
             (res: any) => {
-              console.log('res', res);
               return {
                 data: res.data?.data,
                 success: res.data?.success,
@@ -119,7 +116,6 @@ const Index: React.FC = () => {
         open={createModalOpen}
         onOpenChange={handleModalOpen}
         onFinish={async (value) => {
-          console.log('弓少旭想看看value', value);
           const success = await addStockCombination(value);
           if (success) {
             handleModalOpen(false);
