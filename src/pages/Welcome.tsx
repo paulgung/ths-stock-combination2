@@ -167,13 +167,20 @@ const Welcome: React.FC = () => {
       }}
     >
       {/*系统介绍*/}
-      <div style={{ display: 'flex', height: '700px', background: '#fff', width: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          marginTop: '24px',
+          height: '700px',
+          background: '#fff',
+          width: '100%',
+        }}
+      >
         {/* 左侧股票组合 */}
         <div style={{ width: '50%', height: '700px' }}>
           <ProList<{ title: string }>
             rowKey="title"
             headerTitle=""
-            style={{ marginTop: '10px' }}
             expandable={{ expandedRowKeys, onExpandedRowsChange: setExpandedRowKeys }}
             dataSource={newDataSource}
             metas={{
