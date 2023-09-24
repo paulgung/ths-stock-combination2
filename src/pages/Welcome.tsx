@@ -24,6 +24,7 @@ const Welcome: React.FC = () => {
   const [newDataSource, setNewDataSource] = useState<any[]>([]);
   const [combinationId, setCombinationId] = useState(0); //选中的组合ID
   const navigate = useNavigate();
+  const [polling, setPolling] = useState<number | undefined>(2000); // 3秒一次轮询
 
   // 辅助方法
   const getStockColor = (item: any) => {
@@ -211,6 +212,7 @@ const Welcome: React.FC = () => {
             actionRef={actionRef}
             cardBordered
             search={false}
+            polling={polling || undefined}
             request={async ({ rows = 10, current }) => {
               return getAllStockData({
                 pageSize: rows,
