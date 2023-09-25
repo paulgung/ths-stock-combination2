@@ -80,7 +80,7 @@ export async function addStocks(params?: { [key: string]: any }) {
 export async function updateStockCombination(params?: { [key: string]: any }) {
   return axios(baseUrl + '/admin/combination/v1/combination', {
     method: 'PUT',
-    params: params,
+    body: params,
   });
 }
 
@@ -88,7 +88,7 @@ export async function updateStockCombination(params?: { [key: string]: any }) {
 export async function updateSubStockCombination(params?: { [key: string]: any }) {
   return axios(baseUrl + '/admin/combination/v1/subCombination', {
     method: 'PUT',
-    params: params,
+    body: params,
   });
 }
 
@@ -96,7 +96,7 @@ export async function updateSubStockCombination(params?: { [key: string]: any })
 export async function updateStocks(params?: { [key: string]: any }) {
   return axios(baseUrl + '/admin/combination/v1/stocks', {
     method: 'PUT',
-    params: params,
+    body: params,
   });
 }
 
