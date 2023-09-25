@@ -8,6 +8,7 @@ import { PageContainer, ProList } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { ProTable } from '@ant-design/pro-table';
 import { Button, message } from 'antd';
+import { SortOrder } from 'antd/es/table/interface';
 import React, { ReactText, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -148,17 +149,102 @@ const Welcome: React.FC = () => {
       title: '股票价格',
       dataIndex: 'stockPrice',
       hideInSearch: true,
+      sorter: true
     },
     {
       title: '涨跌幅',
       dataIndex: 'stockGains',
       hideInSearch: true,
+      sorter: true,
       render: (item: any) => {
         return <div style={getStockColor(item)}>{item}</div>;
       },
     },
   ];
 
+
+  const tableRequest = async ({ pageSize = 10, current }: {
+    pageSize?: number | undefined;
+    current?: number | undefined;
+    keyword?: string | undefined;
+  }, sort: Record<string, SortOrder>) => {
+
+    return getAllStockData({
+      pageSize: pageSize,
+      pageNo: current,
+      combinationId: combinationId ? combinationId : null,
+    }).then(
+      async (res: any) => {
+        const stock_id_list = res.data?.data.map((item: any) => {
+          return {
+            market_id: item.marketId,
+            stock_code: item.stockCode,
+          };
+        });
+        let sort_mode = 1; //排序模式（0-股票价格，1-涨跌幅）
+        let sort_rule = -1; //排序规则（1-升序，-1-降序）
+        const page_num = 1;
+        const page_size = 10;
+
+        if (Object.keys(sort).length > 0) {
+          sort_mode = Object.keys(sort)[0] === 'stockPrice' ? 0 : 1;
+          sort_rule = sort[Object.keys(sort)[0]] === 'ascend' ? 1 : -1;
+        }
+
+        const quotations: any = await getStockQuotation({
+          stock_id_list,
+          sort_mode,
+          sort_rule,
+          page_num,
+          page_size,
+        });
+        // quotations为最新行情列表（排序后），res为原本的所有股票列表
+        const _data = quotations.data.data.list.map((item: any) => {
+          const subList = res.data.data.filter((item2: any) => {
+            return item.stock_code === item2.stockCode;
+          });
+          
+          return {
+            ...subList[0],
+            stockName: item.stock_name,
+            stockCode: item.stock_code,
+            stockPrice: item.newest_price,
+            stockGains: `${Number(item.newest_uplift) > 0 ? '+' : ''}${Number(
+              item.newest_uplift,
+            ).toFixed(2)}%`,
+          }
+        })
+        // const _data = res.data?.data.map((item: any) => {
+        //   const subList = quotations.data.data.list.filter((item2: any) => {
+        //     return item.stockCode === item2.stock_code;
+        //   });
+        //   return {
+        //     ...item,
+        //     stockName: subList[0].stock_name,
+        //     stockCode: subList[0].stock_code,
+        //     stockPrice: subList[0].newest_price,
+        //     stockGains: `${Number(subList[0].newest_uplift) > 0 ? '+' : ''}${Number(
+        //       subList[0].newest_uplift,
+        //     ).toFixed(2)}%`,
+        //   };
+        // });
+
+        return {
+          data: _data,
+          success: res.data?.success,
+          total: res.data?.total,
+        };
+      },
+      (): any => {
+        message.error('网络请求失败！');
+        return {
+          data: [],
+          success: false,
+          total: 0,
+        };
+      },
+    );
+  };
   return (
     <PageContainer
       header={{
@@ -197,7 +283,12 @@ const Welcome: React.FC = () => {
                         return (
                           <div
                             key={item.id}
-                            style={{ color: 'black', fontWeight: 400, cursor: 'pointer' }}
+                            style={{
+                              color: 'black',
+                              fontWeight: 400,
+                              cursor: 'pointer',
+                              marginTop: '10px'
+                            }}
                             onClick={() => updateStockListFromSub(item.id)}
                           >
                             {item.combinationName}
@@ -220,60 +311,7 @@ const Welcome: React.FC = () => {
             cardBordered
             search={false}
             polling={polling || undefined}
-            request={async ({ rows = 10, current }) => {
-              return getAllStockData({
-                pageSize: rows,
-                pageNo: current,
-                combinationId: combinationId ? combinationId : null,
-              }).then(
-                async (res: any) => {
-                  const stock_id_list = res.data?.data.map((item: any) => {
-                    return {
-                      market_id: item.marketId,
-                      stock_code: item.stockCode,
-                    };
-                  });
-                  const sort_mode = 1; //排序模式（0-股票价格，1-涨跌幅）
-                  const sort_rule = -1; //排序规则（1-升序，-1-降序）
-                  const page_num = 1;
-                  const page_size = 10;
-                  const quotations: any = await getStockQuotation({
-                    stock_id_list,
-                    sort_mode,
-                    sort_rule,
-                    page_num,
-                    page_size,
-                  });
-                  const _data = res.data?.data.map((item: any) => {
-                    const subList = quotations.data.data.list.filter((item2: any) => {
-                      return item.stockCode === item2.stock_code;
-                    });
-                    return {
-                      ...item,
-                      stockName: subList[0].stock_name,
-                      stockCode: subList[0].stock_code,
-                      stockPrice: subList[0].newest_price,
-                      stockGains: `${Number(subList[0].newest_uplift) > 0 ? '+' : ''}${Number(
-                        subList[0].newest_uplift,
-                      ).toFixed(2)}%`,
-                    };
-                  });
-                  return {
-                    data: _data,
-                    success: res.data?.success,
-                    total: res.data?.total,
-                  };
-                },
-                (): any => {
-                  message.error('网络请求失败！');
-                  return {
-                    data: [],
-                    success: false,
-                    total: 0,
-                  };
-                },
-              );
-            }}
+            request={tableRequest}
             editable={{
               type: 'multiple',
             }}
